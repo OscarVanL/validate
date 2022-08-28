@@ -247,7 +247,7 @@ func TestStruct(t *testing.T) {
 
 type User struct {
 	ID   string `validate:"required|uuid4"`
-	Name string `validate:"required|min_len:1`
+	Name string `validate:"required|min_len:1"`
 }
 
 func (User) ConfigValidation(v *Validation) {
@@ -267,18 +267,17 @@ func (User) ConfigValidation(v *Validation) {
 	)
 }
 
-// func TestStructWithScenesValidation(t *testing.T) {
-// 	is := assert.New(t)
-// 	u := User{
-// 		ID:   "0e533f6c-6265-4034-8db4-a315f49e791f",
-// 		Name: "Bob",
-// 	}
+func TestStructWithScenesValidation(t *testing.T) {
+	is := assert.New(t)
+	u := User{
+		ID:   "0e533f6c-6265-4034-8db4-a315f49e791f",
+		Name: "Bob",
+	}
 
-// 	v := Struct(u)
-// 	// is.True(v.Validate("create"))
+	is.True(Struct(u).Validate("create"))
 
-// 	is.False(v.Validate("update"))
-// }
+	is.False(Struct(u).Validate("update"))
+}
 
 func TestStruct_use_method_validate(t *testing.T) {
 	is := assert.New(t)

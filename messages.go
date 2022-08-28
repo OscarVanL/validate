@@ -19,7 +19,7 @@ const defaultErrMsg = " field did not pass validation"
 var (
 	ErrUnaddressableField = errors.New("cannot set value as it was not passed-by-reference")
 	ErrNoField            = errors.New("field not exist in the source data")
-	ErrSceneDefinition = errors.New("scene values and scene rules not compatible")
+	ErrSceneDefinition    = errors.New("scene values and scene rules not compatible")
 
 	ErrEmptyData   = errors.New("please input data use for validate")
 	ErrInvalidData = errors.New("invalid input data")

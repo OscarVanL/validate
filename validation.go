@@ -644,43 +644,43 @@ func (v *Validation) shouldStop() bool {
 	return v.hasError && v.StopOnError
 }
 
-// func (v *Validation) needToCheck(field string, currScene bool) bool {
-// 	// do not check struct rules if they are overridden by the scene's rules
-// 	// if !currScene {
-// 	if _, ok := v.sceneRules[field]; ok {
-// 		return false
-// 	}
-// 	// }
-
-// 	if len(v.sceneFields) == 0 {
-// 		return true
-// 	}
-
-// 	if _, ok := v.sceneFields[field]; ok {
-// 		return true
-// 	}
-
-// 	return false
-// }
-
 func (v *Validation) needToCheck(field string, currScene bool) bool {
+	// do not check struct rules if they are overridden by the scene's rules
+	if !currScene {
+		if _, ok := v.sceneRules[field]; ok {
+			return false
+		}
+	}
+
 	if len(v.sceneFields) == 0 {
 		return true
 	}
 
-	if currScene {
-		return true
-		// if _, ok := v.sceneFields[field]; ok {
-		// 	return true
-		// }
-	}
-
-	// do not check struct rules if they are overridden by the scene's rules
-
-	_, inScFields := v.sceneFields[field]
-	if _, ok := v.sceneRules[field]; !ok && inScFields {
+	if _, ok := v.sceneFields[field]; ok {
 		return true
 	}
 
 	return false
 }
+
+// func (v *Validation) needToCheck(field string, currScene bool) bool {
+// 	if len(v.sceneFields) == 0 {
+// 		return true
+// 	}
+
+// 	if currScene {
+// 		return true
+// 		// if _, ok := v.sceneFields[field]; ok {
+// 		// 	return true
+// 		// }
+// 	}
+
+// 	// do not check struct rules if they are overridden by the scene's rules
+
+// 	_, inScFields := v.sceneFields[field]
+// 	if _, ok := v.sceneRules[field]; !ok && inScFields {
+// 		return true
+// 	}
+
+// 	return false
+// }

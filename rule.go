@@ -202,13 +202,13 @@ func (v *Validation) stringRule(scene, field, rule string, filterRule ...string)
 				v.addOneRule(scene, field, validator, ValidatorName(validator), list[1])
 			// some special validator. need merge args to one.
 			case "enum", "notIn":
-				v.AddRule(field, validator, parseArgString(list[1]))
+				v.addOneRule(scene, field, validator, ValidatorName(validator), parseArgString(list[1]))
 			default:
 				args := parseArgString(list[1])
-				v.AddRule(field, validator, strings2Args(args)...)
+				v.addOneRule(scene, field, validator, ValidatorName(validator), strings2Args(args)...)
 			}
 		} else {
-			v.AddRule(field, validator)
+			v.addOneRule(scene, field, validator, ValidatorName(validator))
 		}
 	}
 
