@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 )
@@ -56,6 +57,14 @@ func (v *Validation) Validate(scene ...string) bool {
 		}
 	}
 
+	// apply scene rules
+	// TODO
+	// for _, rule := range v.sceneRules {
+	// 	if rule.Apply(v) {
+	// 		break
+	// 	}
+	// }
+
 	v.hasValidated = true
 	if v.hasError {
 		// clear safe data on error.
@@ -85,7 +94,9 @@ func (r *Rule) Apply(v *Validation) (stop bool) {
 
 	// validate each field
 	for _, field := range r.fields {
-		if v.isNotNeedToCheck(field) {
+		fmt.Printf("validation scene: %s, rule scene: %s\n", v.scene, r.scene)
+		currScene := r.scene == v.scene
+		if !v.needToCheck(field, currScene) {
 			continue
 		}
 

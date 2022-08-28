@@ -50,7 +50,12 @@ type Rule struct {
 
 // NewRule create new Rule instance
 func NewRule(fields, validator string, args ...interface{}) *Rule {
+	return newRule(defaultScene, fields, validator, args...)
+}
+
+func newRule(scene, fields, validator string, args ...interface{}) *Rule {
 	return &Rule{
+		scene:  scene,
 		fields: stringSplit(fields, ","),
 		// validator args
 		arguments: args,
@@ -166,6 +171,10 @@ func (r *Rule) errorMessage(field, validator string, v *Validation) (msg string)
 //	// will try convert to int before apply validate.
 //	v.StringRule("age", "required|int|min:12", "toInt")
 func (v *Validation) StringRule(field, rule string, filterRule ...string) *Validation {
+	return v.stringRule(defaultScene, field, rule, filterRule...)
+}
+
+func (v *Validation) stringRule(scene, field, rule string, filterRule ...string) *Validation {
 	rule = strings.TrimSpace(rule)
 	if rule == "" {
 		return v
@@ -190,7 +199,7 @@ func (v *Validation) StringRule(field, rule string, filterRule ...string) *Valid
 				v.SetDefValue(field, list[1])
 			// eg 'regex:\d{4,6}' dont need split args. args is "\d{4,6}"
 			case "regexp":
-				v.AddRule(field, validator, list[1])
+				v.addOneRule(scene, field, validator, ValidatorName(validator), list[1])
 			// some special validator. need merge args to one.
 			case "enum", "notIn":
 				v.AddRule(field, validator, parseArgString(list[1]))
@@ -241,12 +250,12 @@ func (v *Validation) ConfigRules(mp MS) *Validation {
 
 // AddRule for current validation
 func (v *Validation) AddRule(fields, validator string, args ...interface{}) *Rule {
-	return v.addOneRule(fields, validator, ValidatorName(validator), args)
+	return v.addOneRule(defaultScene, fields, validator, ValidatorName(validator), args...)
 }
 
 // add one Rule for current validation
-func (v *Validation) addOneRule(fields, validator, realName string, args []interface{}) *Rule {
-	rule := NewRule(fields, validator, args...)
+func (v *Validation) addOneRule(scene, fields, validator, realName string, args ...interface{}) *Rule {
+	rule := newRule(scene, fields, validator, args...)
 
 	// init some settings
 	rule.realName = realName

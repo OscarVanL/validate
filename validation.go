@@ -17,6 +17,9 @@ const (
 
 	filterError   = "_filter"
 	validateError = "_validate"
+	sceneError    = "_scene"
+
+	defaultScene = ""
 
 	// sniff Length, use for detect file mime type
 	sniffLen = 512
@@ -61,7 +64,7 @@ type Validation struct {
 	hasFiltered bool
 	// mark is validated
 	hasValidated bool
-	// validate rules for the validation
+	// validate rules for the scene validation
 	rules []*Rule
 	// validators for the validation
 	validators map[string]int8
@@ -79,8 +82,12 @@ type Validation struct {
 	// 	"update": {"field0", "field2"}
 	// }
 	scenes SValues
+	// whether scene-specific rules should be applied for a field
+	scenesRules map[string]map[string]uint8
 	// should check fields in current scene.
 	sceneFields map[string]uint8
+	// should use scene rule overrides for the current scene
+	sceneRules map[string]uint8
 	// filtering rules for the validation
 	filterRules []*FilterRule
 	// filter func reflect.Value map
@@ -122,7 +129,6 @@ func (v *Validation) ResetResult() {
 func (v *Validation) Reset() {
 	v.ResetResult()
 
-	// rules
 	v.rules = v.rules[:0]
 	v.filterRules = v.filterRules[:0]
 	v.validators = make(map[string]int8)
@@ -154,14 +160,69 @@ func (v *Validation) WithScenarios(scenes SValues) *Validation {
 //		"update": []string{"name"},
 //	})
 //	ok := v.AtScene("create").Validate()
-func (v *Validation) WithScenes(scenes map[string][]string) *Validation {
+//
+// With per-scene rule overrides:
+//
+//		v.WithScenes(
+//		    SValues{
+//			    "create": []string{"name", "email"},
+//			    "update": []string{"name", "email:'empty'"},
+//		    },
+//	     SRules{
+//	         "create": {
+//	              "email": "required|minLen:1",
+//	          },
+//	         "update": {
+//	              "email": "empty",
+//	          },
+//	     },
+//	 )
+//		ok := v.AtScene("create").Validate()
+func (v *Validation) WithScenes(scenes map[string][]string, rules ...map[string]map[string]string) *Validation {
 	v.scenes = scenes
+
+	if len(rules) > 0 {
+		if v.scenesRules == nil {
+			v.scenesRules = make(map[string]map[string]uint8, len(rules[0]))
+		}
+
+		// SRules must only refer to scenes that exist in SValues
+		for scene, rules := range rules[0] {
+			if v.scenesRules[scene] == nil {
+				v.scenesRules[scene] = make(map[string]uint8)
+			}
+
+			if _, ok := scenes[scene]; !ok {
+				v.AddError(sceneError, sceneError, ErrSceneDefinition.Error())
+			}
+
+			for name, rule := range rules {
+				v.scenesRules[scene][name] = 1
+				v.stringRule(scene, name, rule)
+			}
+		}
+	}
+
+	// gOpt.ValidateTag
+	// gOpt.FilterTag
+
+	// v.StringRule()
+
+	// test := "name`validate:'test' format:'trim'`"
+	// TODO
+	// for _, fields := range scenes {
+	// 	for _, field := range fields {
+	// 		if field
+	// 	}
+	// 	v
+	// }
 	return v
 }
 
 // AtScene setting current validate scene.
 func (v *Validation) AtScene(scene string) *Validation {
 	v.scene = scene
+	v.sceneRules = v.scenesRules[scene]
 	return v
 }
 
@@ -583,11 +644,43 @@ func (v *Validation) shouldStop() bool {
 	return v.hasError && v.StopOnError
 }
 
-func (v *Validation) isNotNeedToCheck(field string) bool {
+// func (v *Validation) needToCheck(field string, currScene bool) bool {
+// 	// do not check struct rules if they are overridden by the scene's rules
+// 	// if !currScene {
+// 	if _, ok := v.sceneRules[field]; ok {
+// 		return false
+// 	}
+// 	// }
+
+// 	if len(v.sceneFields) == 0 {
+// 		return true
+// 	}
+
+// 	if _, ok := v.sceneFields[field]; ok {
+// 		return true
+// 	}
+
+// 	return false
+// }
+
+func (v *Validation) needToCheck(field string, currScene bool) bool {
 	if len(v.sceneFields) == 0 {
-		return false
+		return true
 	}
 
-	_, ok := v.sceneFields[field]
-	return !ok
+	if currScene {
+		return true
+		// if _, ok := v.sceneFields[field]; ok {
+		// 	return true
+		// }
+	}
+
+	// do not check struct rules if they are overridden by the scene's rules
+
+	_, inScFields := v.sceneFields[field]
+	if _, ok := v.sceneRules[field]; !ok && inScFields {
+		return true
+	}
+
+	return false
 }

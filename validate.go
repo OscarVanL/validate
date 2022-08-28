@@ -24,6 +24,9 @@ type MS map[string]string
 // SValues simple values
 type SValues map[string][]string
 
+// SRules is for scene rule overrides
+type SRules map[string]map[string]string
+
 // One get one item's value string
 func (ms MS) One() string {
 	for _, msg := range ms {
